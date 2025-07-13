@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Calculator, Zap, Star, TrendingUp, Info, Moon, Sun, Heart, Copy, Download, BarChart3, Filter, RefreshCw, Sparkles, Target, DollarSign, Clock, Users, Shield, Lightbulb, Settings, Plus, Minus, Eye, EyeOff, Maximize2, GitCompare } from 'lucide-react';
+import { Search, Calculator, Zap, Star, TrendingUp, Info, Moon, Sun, Heart, Copy, Download, BarChart3, Filter, RefreshCw, Sparkles, Target, DollarSign, Clock, Users, Shield, Lightbulb, Settings, Plus, Minus, Eye, EyeOff, Maximize2, GitCompare, ArrowRightLeft } from 'lucide-react';
 
 const EnhancedGrowGardenCalculator = () => {
   // Core state with safe defaults - ALL HOOKS MUST BE AT THE TOP
@@ -31,6 +31,14 @@ const EnhancedGrowGardenCalculator = () => {
   const [showEconomicAnalysis, setShowEconomicAnalysis] = useState(false);
   const [cropListCollapsed, setCropListCollapsed] = useState(false);
   const [petListCollapsed, setPetListCollapsed] = useState(false);
+
+  // New state for Trade Calculator
+  const [offeringItems, setOfferingItems] = useState(Array(4).fill(null));
+  const [receivingItems, setReceivingItems] = useState(Array(4).fill(null));
+  const [showTradeItemSelector, setShowTradeItemSelector] = useState(false);
+  const [currentTradeSlot, setCurrentTradeSlot] = useState({ type: null, index: null });
+  const [showTradeItemEditor, setShowTradeItemEditor] = useState(false);
+  const [editingTradeItem, setEditingTradeItem] = useState(null);
 
   // Comprehensive crop database (100% complete based on latest info)
   const crops = useMemo(() => [
@@ -178,6 +186,154 @@ const EnhancedGrowGardenCalculator = () => {
     { name: "Carrot", baseValue: 400, baseWeight: 0.5, rarity: "Common", type: "Vegetable", seedCost: 10, growthTime: 22, difficulty: 1 },
     { name: "Noble Flower", baseValue: 1200, baseWeight: 1.0, rarity: "Common", type: "Flower", seedCost: 60, growthTime: 32, difficulty: 1 },
     { name: "Dirt Clump", baseValue: 10, baseWeight: 1.0, rarity: "Common", type: "Resource", seedCost: 0, growthTime: 1, difficulty: 0 }
+  ], []);
+
+  // Comprehensive seed database (derived from crops)
+  const seeds = useMemo(() => [
+    // Transcendent Tier Seeds
+    { name: "Bone Blossom Seed", baseValue: 8000, rarity: "Transcendent", type: "Flower", cropName: "Bone Blossom", growthTime: 200, difficulty: 5 },
+    { name: "Candy Blossom Seed", baseValue: 4500, rarity: "Transcendent", type: "Flower", cropName: "Candy Blossom", growthTime: 180, difficulty: 5 },
+    { name: "Celestial Tree Seed", baseValue: 15000, rarity: "Transcendent", type: "Tree", cropName: "Celestial Tree", growthTime: 240, difficulty: 5 },
+    { name: "Void Shard Seed", baseValue: 20000, rarity: "Transcendent", type: "Resource", cropName: "Void Shard", growthTime: 300, difficulty: 5 },
+
+    // Prismatic Tier Seeds
+    { name: "Sugar Apple Seed", baseValue: 25000000, rarity: "Prismatic", type: "Fruit", cropName: "Sugar Apple", growthTime: 150, difficulty: 4 },
+    { name: "Moon Mango Seed", baseValue: 2200, rarity: "Prismatic", type: "Fruit", cropName: "Moon Mango", growthTime: 150, difficulty: 4 },
+    { name: "Burning Bud Seed", baseValue: 50000000, rarity: "Prismatic", type: "Flower", cropName: "Burning Bud", growthTime: 140, difficulty: 4 },
+    { name: "Ember Lily Seed", baseValue: 20000000, rarity: "Prismatic", type: "Flower", cropName: "Ember Lily", growthTime: 140, difficulty: 4 },
+    { name: "Giant Pinecone Seed", baseValue: 55000000, rarity: "Prismatic", type: "Fruit", cropName: "Giant Pinecone", growthTime: 160, difficulty: 4 },
+    { name: "Beanstalk Seed", baseValue: 10000000, rarity: "Prismatic", type: "Vegetable", cropName: "Beanstalk", growthTime: 120, difficulty: 4 },
+    { name: "Celestiberry Seed", baseValue: 1800, rarity: "Prismatic", type: "Fruit", cropName: "Celestiberry", growthTime: 130, difficulty: 4 },
+    { name: "Prism Blossom Seed", baseValue: 3500, rarity: "Prismatic", type: "Flower", cropName: "Prism Blossom", growthTime: 170, difficulty: 4 },
+    { name: "Glimmerwood Tree Seed", baseValue: 4000, rarity: "Prismatic", type: "Tree", cropName: "Glimmerwood Tree", growthTime: 200, difficulty: 4 },
+    { name: "Crystal Herb Seed", baseValue: 1500, rarity: "Prismatic", type: "Herb", cropName: "Crystal Herb", growthTime: 100, difficulty: 4 },
+
+    // Divine Tier Seeds
+    { name: "Fossilight Seed", baseValue: 4000, rarity: "Divine", type: "Fruit", cropName: "Fossilight", growthTime: 170, difficulty: 5 },
+    { name: "Hive Fruit Seed", baseValue: 2800, rarity: "Divine", type: "Fruit", cropName: "Hive Fruit", growthTime: 160, difficulty: 5 },
+    { name: "Moon Blossom Seed", baseValue: 1500, rarity: "Divine", type: "Flower", cropName: "Moon Blossom", growthTime: 120, difficulty: 4 },
+    { name: "Soul Fruit Seed", baseValue: 1200, rarity: "Divine", type: "Fruit", cropName: "Soul Fruit", growthTime: 110, difficulty: 4 },
+    { name: "Cursed Fruit Seed", baseValue: 1100, rarity: "Divine", type: "Fruit", cropName: "Cursed Fruit", growthTime: 100, difficulty: 4 },
+    { name: "Cherry Blossom Seed", baseValue: 900, rarity: "Divine", type: "Flower", cropName: "Cherry Blossom", growthTime: 90, difficulty: 3 },
+    { name: "Venus Fly Trap Seed", baseValue: 750, rarity: "Divine", type: "Flower", cropName: "Venus Fly Trap", growthTime: 85, difficulty: 3 },
+    { name: "Lotus Seed", baseValue: 600, rarity: "Divine", type: "Flower", cropName: "Lotus", growthTime: 80, difficulty: 3 },
+    { name: "Pepper Seed", baseValue: 1000000, rarity: "Divine", type: "Vegetable", cropName: "Pepper", growthTime: 70, difficulty: 3 },
+    { name: "Cacao Seed", baseValue: 2500000, rarity: "Divine", type: "Fruit", cropName: "Cacao", growthTime: 75, difficulty: 3 },
+    { name: "Mushroom Seed", baseValue: 150000, rarity: "Divine", type: "Vegetable", cropName: "Mushroom", growthTime: 65, difficulty: 3 },
+    { name: "Grape Seed", baseValue: 850000, rarity: "Divine", type: "Fruit", cropName: "Grape", growthTime: 50, difficulty: 2 },
+    { name: "Loquat Seed", baseValue: 900000, rarity: "Divine", type: "Fruit", cropName: "Loquat", growthTime: 85, difficulty: 3 },
+    { name: "Feijoa Seed", baseValue: 900000, rarity: "Divine", type: "Fruit", cropName: "Feijoa", growthTime: 80, difficulty: 3 },
+    { name: "Traveler's Fruit Seed", baseValue: 800, rarity: "Divine", type: "Fruit", cropName: "Traveler's Fruit", growthTime: 90, difficulty: 3 },
+    { name: "Pitcher Plant Seed", baseValue: 7500000, rarity: "Divine", type: "Flower", cropName: "Pitcher Plant", growthTime: 95, difficulty: 4 },
+    { name: "Dragon Pepper Seed", baseValue: 750, rarity: "Divine", type: "Vegetable", cropName: "Dragon Pepper", growthTime: 80, difficulty: 4 },
+    { name: "Cocovine Seed", baseValue: 500, rarity: "Divine", type: "Fruit", cropName: "Cocovine", growthTime: 70, difficulty: 3 },
+    { name: "Sunpetal Seed", baseValue: 1400, rarity: "Divine", type: "Flower", cropName: "Sunpetal", growthTime: 115, difficulty: 4 },
+    { name: "Elderwood Tree Seed", baseValue: 2000, rarity: "Divine", type: "Tree", cropName: "Elderwood Tree", growthTime: 150, difficulty: 4 },
+    { name: "Mana Root Seed", baseValue: 900, rarity: "Divine", type: "Herb", cropName: "Mana Root", growthTime: 90, difficulty: 3 },
+    { name: "Gemstone Plant Seed", baseValue: 1750, rarity: "Divine", type: "Resource", cropName: "Gemstone Plant", growthTime: 130, difficulty: 4 },
+
+    // Mythical Tier Seeds
+    { name: "Parasol Flower Seed", baseValue: 8000, rarity: "Mythical", type: "Flower", cropName: "Parasol Flower", growthTime: 200, difficulty: 5 },
+    { name: "Firefly Fern Seed", baseValue: 3600, rarity: "Mythical", type: "Flower", cropName: "Firefly Fern", growthTime: 165, difficulty: 5 },
+    { name: "Moon Melon Seed", baseValue: 1250, rarity: "Mythical", type: "Fruit", cropName: "Moon Melon", growthTime: 115, difficulty: 4 },
+    { name: "Blood Banana Seed", baseValue: 750, rarity: "Mythical", type: "Fruit", cropName: "Blood Banana", growthTime: 85, difficulty: 3 },
+    { name: "Moonglow Seed", baseValue: 600, rarity: "Mythical", type: "Flower", cropName: "Moonglow", growthTime: 80, difficulty: 3 },
+    { name: "Purple Dahlia Seed", baseValue: 70, rarity: "Mythical", type: "Flower", cropName: "Purple Dahlia", growthTime: 45, difficulty: 2 },
+    { name: "Pink Lily Seed", baseValue: 375, rarity: "Mythical", type: "Flower", cropName: "Pink Lily", growthTime: 70, difficulty: 3 },
+    { name: "Lily Of The Valley Seed", baseValue: 350, rarity: "Mythical", type: "Flower", cropName: "Lily Of The Valley", growthTime: 65, difficulty: 3 },
+    { name: "Eggplant Seed", baseValue: 300, rarity: "Mythical", type: "Vegetable", cropName: "Eggplant", growthTime: 60, difficulty: 2 },
+    { name: "Coconut Seed", baseValue: 6000, rarity: "Mythical", type: "Fruit", cropName: "Coconut", growthTime: 55, difficulty: 2 },
+    { name: "Cactus Seed", baseValue: 15000, rarity: "Mythical", type: "Vegetable", cropName: "Cactus", growthTime: 50, difficulty: 2 },
+    { name: "Dragon Fruit Seed", baseValue: 50000, rarity: "Mythical", type: "Fruit", cropName: "Dragon Fruit", growthTime: 55, difficulty: 2 },
+    { name: "Mango Seed", baseValue: 100000, rarity: "Mythical", type: "Fruit", cropName: "Mango", growthTime: 50, difficulty: 2 },
+    { name: "Pineapple Seed", baseValue: 7500, rarity: "Mythical", type: "Fruit", cropName: "Pineapple", growthTime: 48, difficulty: 2 },
+    { name: "Peach Seed", baseValue: 110, rarity: "Mythical", type: "Fruit", cropName: "Peach", growthTime: 45, difficulty: 2 },
+    { name: "Nectarine Seed", baseValue: 115, rarity: "Mythical", type: "Fruit", cropName: "Nectarine", growthTime: 46, difficulty: 2 },
+    { name: "Passionfruit Seed", baseValue: 150, rarity: "Mythical", type: "Fruit", cropName: "Passionfruit", growthTime: 50, difficulty: 2 },
+    { name: "Banana Seed", baseValue: 7000, rarity: "Mythical", type: "Fruit", cropName: "Banana", growthTime: 40, difficulty: 2 },
+    { name: "Prickly Pear Seed", baseValue: 555000, rarity: "Mythical", type: "Fruit", cropName: "Prickly Pear", growthTime: 58, difficulty: 3 },
+    { name: "Guanabana Seed", baseValue: 275, rarity: "Mythical", type: "Fruit", cropName: "Guanabana", growthTime: 62, difficulty: 3 },
+    { name: "Kiwi Seed", baseValue: 10000, rarity: "Mythical", type: "Fruit", cropName: "Kiwi", growthTime: 42, difficulty: 2 },
+    { name: "Rosy Delight Seed", baseValue: 38, rarity: "Mythical", type: "Flower", cropName: "Rosy Delight", growthTime: 27, difficulty: 1 },
+    { name: "Elephant Ears Seed", baseValue: 1000, rarity: "Mythical", type: "Vegetable", cropName: "Elephant Ears", growthTime: 95, difficulty: 4 },
+    { name: "Mystic Shroom Seed", baseValue: 500, rarity: "Mythical", type: "Herb", cropName: "Mystic Shroom", growthTime: 70, difficulty: 3 },
+    { name: "Ironwood Tree Seed", baseValue: 1250, rarity: "Mythical", type: "Tree", cropName: "Ironwood Tree", growthTime: 120, difficulty: 3 },
+    { name: "Sparkleberry Bush Seed", baseValue: 900, rarity: "Mythical", type: "Fruit", cropName: "Sparkleberry Bush", growthTime: 90, difficulty: 3 },
+
+    // Legendary Tier Seeds
+    { name: "Horned Dinoshroom Seed", baseValue: 3450, rarity: "Legendary", type: "Vegetable", cropName: "Horned Dinoshroom", growthTime: 160, difficulty: 5 },
+    { name: "Boneboo Seed", baseValue: 600, rarity: "Legendary", type: "Vegetable", cropName: "Boneboo", growthTime: 80, difficulty: 3 },
+    { name: "Honeysuckle Seed", baseValue: 900, rarity: "Legendary", type: "Flower", cropName: "Honeysuckle", growthTime: 90, difficulty: 3 },
+    { name: "Sunflower Seed", baseValue: 250, rarity: "Legendary", type: "Flower", cropName: "Sunflower", growthTime: 60, difficulty: 2 },
+    { name: "Moonflower Seed", baseValue: 225, rarity: "Legendary", type: "Flower", cropName: "Moonflower", growthTime: 58, difficulty: 2 },
+    { name: "Starfruit Seed", baseValue: 200, rarity: "Legendary", type: "Fruit", cropName: "Starfruit", growthTime: 55, difficulty: 2 },
+    { name: "Watermelon Seed", baseValue: 2500, rarity: "Legendary", type: "Fruit", cropName: "Watermelon", growthTime: 65, difficulty: 3 },
+    { name: "Pumpkin Seed", baseValue: 3000, rarity: "Legendary", type: "Vegetable", cropName: "Pumpkin", growthTime: 60, difficulty: 3 },
+    { name: "Apple Seed", baseValue: 3250, rarity: "Legendary", type: "Fruit", cropName: "Apple", growthTime: 35, difficulty: 1 },
+    { name: "Bamboo Seed", baseValue: 4000, rarity: "Legendary", type: "Vegetable", cropName: "Bamboo", growthTime: 25, difficulty: 1 },
+    { name: "Cranberry Seed", baseValue: 175, rarity: "Legendary", type: "Fruit", cropName: "Cranberry", growthTime: 52, difficulty: 2 },
+    { name: "Durian Seed", baseValue: 160, rarity: "Legendary", type: "Fruit", cropName: "Durian", growthTime: 50, difficulty: 2 },
+    { name: "Easter Egg Seed", baseValue: 225, rarity: "Legendary", type: "Candy", cropName: "Easter Egg", growthTime: 58, difficulty: 2 },
+    { name: "Papaya Seed", baseValue: 140, rarity: "Legendary", type: "Fruit", cropName: "Papaya", growthTime: 48, difficulty: 2 },
+    { name: "Lemon Seed", baseValue: 100, rarity: "Legendary", type: "Fruit", cropName: "Lemon", growthTime: 42, difficulty: 2 },
+    { name: "Rafflesia Seed", baseValue: 3200, rarity: "Legendary", type: "Flower", cropName: "Rafflesia", growthTime: 72, difficulty: 3 },
+    { name: "Aloe Vera Seed", baseValue: 300, rarity: "Legendary", type: "Vegetable", cropName: "Aloe Vera", growthTime: 65, difficulty: 3 },
+    { name: "Bell Pepper Seed", baseValue: 55000, rarity: "Legendary", type: "Vegetable", cropName: "Bell Pepper", growthTime: 52, difficulty: 2 },
+    { name: "Cantaloupe Seed", baseValue: 150, rarity: "Legendary", type: "Fruit", cropName: "Cantaloupe", growthTime: 50, difficulty: 2 },
+    { name: "Green Apple Seed", baseValue: 175, rarity: "Legendary", type: "Fruit", cropName: "Green Apple", growthTime: 40, difficulty: 2 },
+    { name: "Avocado Seed", baseValue: 250, rarity: "Legendary", type: "Fruit", cropName: "Avocado", growthTime: 45, difficulty: 2 },
+    { name: "Cauliflower Seed", baseValue: 1300, rarity: "Legendary", type: "Vegetable", cropName: "Cauliflower", growthTime: 38, difficulty: 2 },
+    { name: "Lumira Seed", baseValue: 100, rarity: "Legendary", type: "Flower", cropName: "Lumira", growthTime: 40, difficulty: 2 },
+    { name: "Lilac Seed", baseValue: 90, rarity: "Legendary", type: "Flower", cropName: "Lilac", growthTime: 38, difficulty: 2 },
+    { name: "Ancient Herb Seed", baseValue: 350, rarity: "Legendary", type: "Herb", cropName: "Ancient Herb", growthTime: 60, difficulty: 3 },
+    { name: "Oak Tree Seed", baseValue: 500, rarity: "Legendary", type: "Tree", cropName: "Oak Tree", growthTime: 80, difficulty: 2 },
+    { name: "Glimmerbulb Seed", baseValue: 325, rarity: "Legendary", type: "Resource", cropName: "Glimmerbulb", growthTime: 70, difficulty: 2 },
+
+    // Rare Tier Seeds
+    { name: "Candy Sunflower Seed", baseValue: 150, rarity: "Rare", type: "Flower", cropName: "Candy Sunflower", growthTime: 48, difficulty: 2 },
+    { name: "Foxglove Seed", baseValue: 125, rarity: "Rare", type: "Flower", cropName: "Foxglove", growthTime: 45, difficulty: 2 },
+    { name: "Mint Seed", baseValue: 110, rarity: "Rare", type: "Vegetable", cropName: "Mint", growthTime: 42, difficulty: 2 },
+    { name: "Glowshroom Seed", baseValue: 100, rarity: "Rare", type: "Vegetable", cropName: "Glowshroom", growthTime: 40, difficulty: 2 },
+    { name: "Daffodil Seed", baseValue: 1000, rarity: "Rare", type: "Flower", cropName: "Daffodil", growthTime: 38, difficulty: 2 },
+    { name: "Raspberry Seed", baseValue: 75, rarity: "Rare", type: "Fruit", cropName: "Raspberry", growthTime: 35, difficulty: 1 },
+    { name: "Pear Seed", baseValue: 70, rarity: "Rare", type: "Fruit", cropName: "Pear", growthTime: 34, difficulty: 1 },
+    { name: "Tomato Seed", baseValue: 800, rarity: "Rare", type: "Vegetable", cropName: "Tomato", growthTime: 32, difficulty: 1 },
+    { name: "Corn Seed", baseValue: 1300, rarity: "Rare", type: "Vegetable", cropName: "Corn", growthTime: 25, difficulty: 1 },
+    { name: "Peace Lily Seed", baseValue: 100, rarity: "Rare", type: "Flower", cropName: "Peace Lily", growthTime: 40, difficulty: 2 },
+    { name: "Delphinium Seed", baseValue: 90, rarity: "Rare", type: "Flower", cropName: "Delphinium", growthTime: 38, difficulty: 2 },
+    { name: "Stonebite Seed", baseValue: 60, rarity: "Rare", type: "Flower", cropName: "Stonebite", growthTime: 32, difficulty: 1 },
+    { name: "Paradise Petal Seed", baseValue: 1250, rarity: "Rare", type: "Flower", cropName: "Paradise Petal", growthTime: 50, difficulty: 2 },
+    { name: "Healing Herb Seed", baseValue: 50, rarity: "Rare", type: "Herb", cropName: "Healing Herb", growthTime: 30, difficulty: 1 },
+    { name: "Birch Tree Seed", baseValue: 125, rarity: "Rare", type: "Tree", cropName: "Birch Tree", growthTime: 45, difficulty: 1 },
+    { name: "Copper Ore Plant Seed", baseValue: 150, rarity: "Rare", type: "Resource", cropName: "Copper Ore Plant", growthTime: 40, difficulty: 2 },
+
+    // Uncommon Tier Seeds
+    { name: "Rose Seed", baseValue: 100, rarity: "Uncommon", type: "Flower", cropName: "Rose", growthTime: 40, difficulty: 2 },
+    { name: "Lavender Seed", baseValue: 80, rarity: "Uncommon", type: "Flower", cropName: "Lavender", growthTime: 36, difficulty: 2 },
+    { name: "Red Lollipop Seed", baseValue: 75, rarity: "Uncommon", type: "Candy", cropName: "Red Lollipop", growthTime: 35, difficulty: 1 },
+    { name: "Blue Lollipop Seed", baseValue: 70, rarity: "Uncommon", type: "Candy", cropName: "Blue Lollipop", growthTime: 34, difficulty: 1 },
+    { name: "Orange Tulip Seed", baseValue: 600, rarity: "Uncommon", type: "Flower", cropName: "Orange Tulip", growthTime: 32, difficulty: 1 },
+    { name: "Nightshade Seed", baseValue: 50, rarity: "Uncommon", type: "Flower", cropName: "Nightshade", growthTime: 30, difficulty: 1 },
+    { name: "Blueberry Seed", baseValue: 400, rarity: "Uncommon", type: "Fruit", cropName: "Blueberry", growthTime: 25, difficulty: 1 },
+    { name: "Succulent Seed", baseValue: 50, rarity: "Uncommon", type: "Flower", cropName: "Succulent", growthTime: 30, difficulty: 1 },
+    { name: "Wild Carrot Seed", baseValue: 40, rarity: "Uncommon", type: "Vegetable", cropName: "Wild Carrot", growthTime: 28, difficulty: 1 },
+    { name: "Crocus Seed", baseValue: 28, rarity: "Uncommon", type: "Flower", cropName: "Crocus", growthTime: 24, difficulty: 1 },
+    { name: "Manuka Flower Seed", baseValue: 35, rarity: "Uncommon", type: "Flower", cropName: "Manuka Flower", growthTime: 26, difficulty: 1 },
+    { name: "Spice Leaf Seed", baseValue: 25, rarity: "Uncommon", type: "Herb", cropName: "Spice Leaf", growthTime: 20, difficulty: 1 },
+    { name: "Small Bush Seed", baseValue: 15, rarity: "Uncommon", type: "Resource", cropName: "Small Bush", growthTime: 15, difficulty: 1 },
+
+    // Common Tier Seeds
+    { name: "Nectarshade Seed", baseValue: 40, rarity: "Common", type: "Flower", cropName: "Nectarshade", growthTime: 28, difficulty: 1 },
+    { name: "Dandelion Seed", baseValue: 30, rarity: "Common", type: "Flower", cropName: "Dandelion", growthTime: 25, difficulty: 1 },
+    { name: "Bee Balm Seed", baseValue: 32, rarity: "Common", type: "Flower", cropName: "Bee Balm", growthTime: 25, difficulty: 1 },
+    { name: "Rosy Delight Seed", baseValue: 38, rarity: "Common", type: "Flower", cropName: "Rosy Delight", growthTime: 27, difficulty: 1 },
+    { name: "Liberty Lily Seed", baseValue: 45, rarity: "Common", type: "Flower", cropName: "Liberty Lily", growthTime: 29, difficulty: 1 },
+    { name: "Pink Tulip Seed", baseValue: 40, rarity: "Common", type: "Flower", cropName: "Pink Tulip", growthTime: 28, difficulty: 1 },
+    { name: "Chocolate Carrot Seed", baseValue: 25, rarity: "Common", type: "Vegetable", cropName: "Chocolate Carrot", growthTime: 23, difficulty: 1 },
+    { name: "Strawberry Seed", baseValue: 50, rarity: "Common", type: "Fruit", cropName: "Strawberry", growthTime: 28, difficulty: 1 },
+    { name: "Carrot Seed", baseValue: 10, rarity: "Common", type: "Vegetable", cropName: "Carrot", growthTime: 22, difficulty: 1 },
+    { name: "Noble Flower Seed", baseValue: 60, rarity: "Common", type: "Flower", cropName: "Noble Flower", growthTime: 32, difficulty: 1 },
+    { name: "Dirt Clump Seed", baseValue: 0, rarity: "Common", type: "Resource", cropName: "Dirt Clump", growthTime: 1, difficulty: 0 }
   ], []);
 
   // Comprehensive pet database (100% complete based on latest info)
@@ -385,6 +541,36 @@ const EnhancedGrowGardenCalculator = () => {
     }
   }, [pets, petSearchTerm]);
 
+  const filteredSeeds = useMemo(() => {
+    try {
+      let filtered = seeds.filter(seed => seed && seed.name);
+
+      if (searchTerm) {
+        filtered = filtered.filter(seed => {
+          const name = (seed.name || '').toLowerCase();
+          const type = (seed.type || '').toLowerCase();
+          const rarity = (seed.rarity || '').toLowerCase();
+          const cropName = (seed.cropName || '').toLowerCase();
+          const search = searchTerm.toLowerCase();
+          return name.includes(search) || type.includes(search) || rarity.includes(search) || cropName.includes(search);
+        });
+      }
+
+      if (filters.rarity.length > 0) {
+        filtered = filtered.filter(seed => seed.rarity && filters.rarity.includes(seed.rarity));
+      }
+
+      if (filters.type.length > 0) {
+        filtered = filtered.filter(seed => seed.type && filters.type.includes(seed.type));
+      }
+
+      return filtered;
+    } catch (error) {
+      console.error('Seed filtering error:', error);
+      return [];
+    }
+  }, [seeds, searchTerm, filters]);
+
   // Enhanced calculation system with comprehensive safety
   const calculateValue = useMemo(() => {
     try {
@@ -558,6 +744,226 @@ const EnhancedGrowGardenCalculator = () => {
     }
   };
 
+  // Trade Calculator Logic
+  const calculateTradeItemValue = (item) => {
+    if (!item) return 0;
+    
+    let value = 0;
+    if (item.type === 'crop') {
+      const baseValue = item.data.baseValue || 0;
+      const weight = item.weight || 1;
+      const baseWeight = item.data.baseWeight || 1;
+      const weightMultiplier = Math.pow(weight / baseWeight, 2) || 1;
+
+      const growthMutations = item.mutations.filter(m =>
+        m && m.name && mutations.growth.some(gm => gm.name === m.name)
+      );
+      const growthMultiplier = growthMutations.length > 0 ?
+        growthMutations.reduce((total, mut) => total * (Number(mut.multiplier) || 1), 1) : 1;
+
+      const environmentalMutations = item.mutations.filter(m =>
+        m && m.name && mutations.environmental.some(em => em.name === m.name)
+      );
+      const mutationSum = environmentalMutations.reduce((sum, mut) => sum + (Number(mut.multiplier) || 0), 0);
+      const mutationCount = environmentalMutations.length;
+      const environmentalMultiplier = mutationCount > 0 ? Math.max(1, 1 + mutationSum - mutationCount) : 1;
+
+      value = Math.round(baseValue * weightMultiplier * growthMultiplier * environmentalMultiplier) * (item.quantity || 1);
+    } else if (item.type === 'pet') {
+      const petBaseValue = item.data.baseValue || 0;
+      const petLevelMultiplier = 1 + Math.max(0, (item.level || 1) - 1) * 0.1;
+      value = Math.round(petBaseValue * petLevelMultiplier) * (item.quantity || 1);
+    } else if (item.type === 'seed') {
+      // Seeds have a simple value calculation - just base value * quantity
+      value = (item.data.baseValue || 0) * (item.quantity || 1);
+    } else if (item.type === 'resource' || item.type === 'herb' || item.type === 'tree' || item.type === 'candy') {
+      value = (item.data.baseValue || 0) * (item.quantity || 1);
+    }
+    return value;
+  };
+
+  const calculateTradeValue = (items) => {
+    return items.reduce((total, item) => {
+      if (!item) return total;
+      return total + calculateTradeItemValue(item);
+    }, 0);
+  };
+
+  const totalOfferingValue = useMemo(() => calculateTradeValue(offeringItems), [offeringItems]);
+  const totalReceivingValue = useMemo(() => calculateTradeValue(receivingItems), [receivingItems]);
+
+  const tradeDifference = totalReceivingValue - totalOfferingValue;
+
+  const getTradeEquitability = () => {
+    const differencePercentage = (Math.abs(tradeDifference) / Math.max(totalOfferingValue, totalReceivingValue)) * 100;
+
+    if (totalOfferingValue === 0 && totalReceivingValue === 0) {
+      return { status: 'neutral', message: 'Add items to calculate trade!', color: 'text-gray-500' };
+    }
+    if (totalOfferingValue === 0) {
+      return { status: 'good', message: 'You receive ¢' + formatNumber(totalReceivingValue) + ' for free!', color: 'text-green-500' };
+    }
+    if (totalReceivingValue === 0) {
+      return { status: 'bad', message: 'You offer ¢' + formatNumber(totalOfferingValue) + ' for nothing!', color: 'text-red-500' };
+    }
+
+    if (Math.abs(tradeDifference) <= totalOfferingValue * 0.05 && Math.abs(tradeDifference) <= totalReceivingValue * 0.05) { // Within 5%
+      return { status: 'fair', message: 'Trade looks fair!', color: 'text-yellow-500' };
+    } else if (tradeDifference > 0) { // You receive more
+      return { status: 'advantage', message: `Advantageous trade for you! (+${differencePercentage.toFixed(1)}%)`, color: 'text-green-500' };
+    } else { // You offer more
+      return { status: 'disadvantage', message: `Disadvantageous trade for you! (-${differencePercentage.toFixed(1)}%)`, color: 'text-red-500' };
+    }
+  };
+
+  const handleSelectTradeItem = (itemType, itemData, slotIndex) => {
+    const newItem = {
+      type: itemType,
+      data: itemData,
+      quantity: 1, // Default quantity for crops/resources
+      level: 1,    // Default level for pets
+      mutations: [] // Potentially add mutations to trade crops later
+    };
+
+    if (currentTradeSlot.type === 'offer') {
+      const newOfferingItems = [...offeringItems];
+      newOfferingItems[currentTradeSlot.index] = newItem;
+      setOfferingItems(newOfferingItems);
+    } else if (currentTradeSlot.type === 'receive') {
+      const newReceivingItems = [...receivingItems];
+      newReceivingItems[currentTradeSlot.index] = newItem;
+      setReceivingItems(newReceivingItems);
+    }
+    setShowTradeItemSelector(false);
+    setSearchTerm(''); // Clear search term after selection
+    setPetSearchTerm(''); // Clear pet search term after selection
+  };
+
+  const removeItemFromTrade = (listType, index) => {
+    if (listType === 'offer') {
+      const newOfferingItems = [...offeringItems];
+      newOfferingItems[index] = null;
+      setOfferingItems(newOfferingItems);
+    } else if (listType === 'receive') {
+      const newReceivingItems = [...receivingItems];
+      newReceivingItems[index] = null;
+      setReceivingItems(newReceivingItems);
+    }
+  };
+
+  const updateTradeItemQuantity = (listType, index, quantity) => {
+    const updateFunction = listType === 'offer' ? setOfferingItems : setReceivingItems;
+    updateFunction(prevItems => {
+      const newItems = [...prevItems];
+      if (newItems[index]) {
+        newItems[index].quantity = Math.max(1, quantity);
+      }
+      return newItems;
+    });
+  };
+
+  const updateTradePetLevel = (listType, index, level) => {
+    const updateFunction = listType === 'offer' ? setOfferingItems : setReceivingItems;
+    updateFunction(prevItems => {
+      const newItems = [...prevItems];
+      if (newItems[index] && newItems[index].type === 'pet') {
+        newItems[index].level = Math.max(1, Math.min(100, level)); // Assuming max pet level is 100
+      }
+      return newItems;
+    });
+  };
+
+  // Trade Item Attribute Editing Functions
+  const openTradeItemEditor = (listType, index) => {
+    const items = listType === 'offer' ? offeringItems : receivingItems;
+    const item = items[index];
+    if (item) {
+      setEditingTradeItem({
+        listType,
+        index,
+        item: { ...item } // Create a copy to edit
+      });
+      setShowTradeItemEditor(true);
+    }
+  };
+
+  const saveTradeItemChanges = () => {
+    if (!editingTradeItem) return;
+
+    const { listType, index, item } = editingTradeItem;
+    const updateFunction = listType === 'offer' ? setOfferingItems : setReceivingItems;
+    
+    updateFunction(prevItems => {
+      const newItems = [...prevItems];
+      newItems[index] = item;
+      return newItems;
+    });
+
+    setShowTradeItemEditor(false);
+    setEditingTradeItem(null);
+  };
+
+  const cancelTradeItemChanges = () => {
+    setShowTradeItemEditor(false);
+    setEditingTradeItem(null);
+  };
+
+  const toggleTradeItemMutation = (mutation) => {
+    if (!editingTradeItem || editingTradeItem.item.type !== 'crop') return;
+
+    const isSelected = editingTradeItem.item.mutations.some(m => m && m.name === mutation.name);
+
+    if (isSelected) {
+      setEditingTradeItem(prev => ({
+        ...prev,
+        item: {
+          ...prev.item,
+          mutations: prev.item.mutations.filter(m => m && m.name !== mutation.name)
+        }
+      }));
+    } else {
+      let newMutations = [...editingTradeItem.item.mutations];
+
+      if (mutation.conflicts && Array.isArray(mutation.conflicts)) {
+        newMutations = newMutations.filter(m => m && !mutation.conflicts.includes(m.name));
+      }
+      if (mutation.removes && Array.isArray(mutation.removes)) {
+        newMutations = newMutations.filter(m => m && !mutation.removes.includes(m.name));
+      }
+      if (mutation.replaces && Array.isArray(mutation.replaces)) {
+        newMutations = newMutations.filter(m => m && !mutation.replaces.includes(m.name));
+      }
+
+      if (mutation.exclusive && Array.isArray(mutation.exclusive) && editingTradeItem.item.data) {
+        if (!mutation.exclusive.includes(editingTradeItem.item.data.name)) {
+          alert(`${mutation.name} can only be applied to: ${mutation.exclusive.join(', ')}`);
+          return;
+        }
+      }
+
+      newMutations.push(mutation);
+      setEditingTradeItem(prev => ({
+        ...prev,
+        item: {
+          ...prev.item,
+          mutations: newMutations
+        }
+      }));
+    }
+  };
+
+  const updateTradeItemWeight = (weight) => {
+    if (!editingTradeItem || editingTradeItem.item.type !== 'crop') return;
+    
+    setEditingTradeItem(prev => ({
+      ...prev,
+      item: {
+        ...prev.item,
+        weight: Math.max(0.1, Math.min(1000, weight))
+      }
+    }));
+  };
+
   // If there's an error, show a simple error UI
   if (hasError) {
     return (
@@ -608,7 +1014,7 @@ const EnhancedGrowGardenCalculator = () => {
                 <Calculator className={`${darkMode ? 'text-green-400' : 'text-green-600'}`} />
                 <Sparkles className="absolute -top-1 -right-1 text-yellow-500" size={16} />
               </div>
-              Enhanced Grow Garden Calculator
+              SheckleShare
             </h1>
 
             <div className="w-10"></div>
@@ -649,11 +1055,24 @@ const EnhancedGrowGardenCalculator = () => {
                 <Star size={18} />
                 Pets & Trading
               </button>
+              <button
+                onClick={() => setActiveTab('trade')}
+                className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'trade'
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg transform scale-105'
+                    : darkMode
+                    ? 'text-gray-300 hover:bg-gray-700'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <ArrowRightLeft size={18} />
+                Trade Calculator
+              </button>
             </div>
           </div>
         </div>
         {/* Quick Stats Bar */}
-        {(selectedCrop || selectedPet) && (
+        {(selectedCrop || selectedPet) && activeTab !== 'trade' && (
           <div className={`${
             darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
           } rounded-xl p-4 mb-6 border shadow-lg`}>
@@ -710,6 +1129,32 @@ const EnhancedGrowGardenCalculator = () => {
               )}
             </div>
           </div>
+        )}
+        {activeTab === 'trade' && (totalOfferingValue > 0 || totalReceivingValue > 0) && (
+             <div className={`${
+                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              } rounded-xl p-4 mb-6 border shadow-lg`}>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className={`text-2xl font-bold ${darkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+                      ¢{formatNumber(totalOfferingValue)}
+                    </div>
+                    <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>You Offer Value</div>
+                  </div>
+                  <div>
+                    <div className={`text-2xl font-bold ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+                      ¢{formatNumber(totalReceivingValue)}
+                    </div>
+                    <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>You Receive Value</div>
+                  </div>
+                  <div>
+                    <div className={`text-2xl font-bold ${getTradeEquitability().color}`}>
+                      {getTradeEquitability().message}
+                    </div>
+                    <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Trade Status</div>
+                  </div>
+                </div>
+            </div>
         )}
         {/* Content based on active tab */}
         {activeTab === 'crops' && (
@@ -1392,6 +1837,596 @@ const EnhancedGrowGardenCalculator = () => {
               )}
             </div>
 
+          </div>
+        )}
+
+        {activeTab === 'trade' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* You Offer Panel */}
+            <div className={`${
+              darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            } rounded-xl shadow-xl p-6 border`}>
+              <h2 className={`text-xl font-semibold mb-4 flex items-center gap-2 ${
+                darkMode ? 'text-white' : 'text-gray-800'
+              }`}>
+                <ArrowRightLeft size={20} className="rotate-90" />
+                You Offer
+                <span className={`ml-auto px-3 py-1 rounded-full text-sm font-bold ${darkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-100 text-purple-700'}`}>
+                  ¢{formatNumber(totalOfferingValue)}
+                </span>
+              </h2>
+              <div className="grid grid-cols-2 gap-4">
+                {offeringItems.map((item, index) => (
+                  <div
+                    key={`offer-slot-${index}`}
+                    className={`relative p-3 rounded-lg border-2 ${
+                      darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    {!item ? (
+                      <button
+                        onClick={() => {
+                          setShowTradeItemSelector(true);
+                          setCurrentTradeSlot({ type: 'offer', index });
+                        }}
+                        className={`w-full h-24 flex flex-col items-center justify-center rounded-lg border-2 border-dashed ${
+                          darkMode ? 'border-gray-600 text-gray-500 hover:border-blue-500 hover:text-blue-400' : 'border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500'
+                        }`}
+                      >
+                        <Plus size={24} />
+                        <span className="text-xs mt-1">Add Item/Pet</span>
+                      </button>
+                    ) : (
+                      <div className={`space-y-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">{item.data.name}</span>
+                          <div className="flex gap-1">
+                            {/* Favorite button (future) */}
+                            <button
+                              onClick={() => openTradeItemEditor('offer', index)}
+                              className="text-blue-500 hover:text-blue-700"
+                              title="Advanced Edit"
+                            >
+                              <Settings size={14} />
+                            </button>
+                            <button
+                              onClick={() => removeItemFromTrade('offer', index)}
+                              className="text-red-500 hover:text-red-700"
+                              title="Remove"
+                            >
+                              <Minus size={14} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}> 
+                          {item.type === 'pet' ? (
+                            <>
+                              Level
+                              <input
+                                type="range"
+                                min="1"
+                                max="100"
+                                value={item.level}
+                                onChange={e => updateTradePetLevel('offer', index, parseInt(e.target.value) || 1)}
+                                className="mx-2 align-middle"
+                                title="Pet Level"
+                              />
+                              <span className="ml-1">{item.level}</span>
+                            </>
+                          ) : (
+                            <>
+                              Qty
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.quantity}
+                                onChange={e => updateTradeItemQuantity('offer', index, parseInt(e.target.value) || 1)}
+                                className={`w-14 p-1 mx-2 text-center border rounded text-sm ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'}`}
+                                title="Quantity"
+                              />
+                            </>
+                          )}
+                          {item.type === 'crop' && (
+                            <>
+                              <span className="ml-2">Weight</span>
+                              <input
+                                type="range"
+                                min="0.1"
+                                max="1000"
+                                step="0.1"
+                                value={item.weight || 1}
+                                onChange={e => {
+                                  const w = parseFloat(e.target.value) || 1;
+                                  setOfferingItems(prev => {
+                                    const newItems = [...prev];
+                                    if (newItems[index]) newItems[index].weight = w;
+                                    return newItems;
+                                  });
+                                }}
+                                className="mx-2 align-middle"
+                                title="Crop Weight"
+                              />
+                              <span>{(item.weight || 1).toFixed(1)}kg</span>
+                              {/* Quick mutation popover button */}
+                              <button
+                                className="ml-2 px-2 py-1 rounded bg-yellow-100 text-yellow-700 text-xs hover:bg-yellow-200"
+                                title="Quick Mutations"
+                                onClick={() => setEditingTradeItem({ listType: 'offer', index, item })}
+                              >
+                                {item.mutations.length} mutation{item.mutations.length !== 1 ? 's' : ''}
+                              </button>
+                            </>
+                          )}
+                          {item.type === 'seed' && (
+                            <span className="ml-2">• Grows: {item.data.cropName}</span>
+                          )}
+                          <span className={`ml-2 px-1 rounded-full text-xs ${getRarityColor(item.data.rarity)}`}>{item.data.rarity}</span>
+                        </div>
+                        <div className={`text-sm font-bold text-right ${darkMode ? 'text-green-400' : 'text-green-600'}`}>¢{formatNumber(calculateTradeItemValue(item))}</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* You Receive Panel */}
+            <div className={`${
+              darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            } rounded-xl shadow-xl p-6 border`}>
+              <h2 className={`text-xl font-semibold mb-4 flex items-center gap-2 ${
+                darkMode ? 'text-white' : 'text-gray-800'
+              }`}>
+                <ArrowRightLeft size={20} />
+                You Receive
+                <span className={`ml-auto px-3 py-1 rounded-full text-sm font-bold ${darkMode ? 'bg-teal-900 text-teal-300' : 'bg-teal-100 text-teal-700'}`}>
+                  ¢{formatNumber(totalReceivingValue)}
+                </span>
+              </h2>
+              <div className="grid grid-cols-2 gap-4">
+                {receivingItems.map((item, index) => (
+                  <div
+                    key={`receive-slot-${index}`}
+                    className={`relative p-3 rounded-lg border-2 ${
+                      darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    {!item ? (
+                      <button
+                        onClick={() => {
+                          setShowTradeItemSelector(true);
+                          setCurrentTradeSlot({ type: 'receive', index });
+                        }}
+                        className={`w-full h-24 flex flex-col items-center justify-center rounded-lg border-2 border-dashed ${
+                          darkMode ? 'border-gray-600 text-gray-500 hover:border-blue-500 hover:text-blue-400' : 'border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500'
+                        }`}
+                      >
+                        <Plus size={24} />
+                        <span className="text-xs mt-1">Add Item/Pet</span>
+                      </button>
+                    ) : (
+                      <div className={`space-y-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">{item.data.name}</span>
+                          <div className="flex gap-1">
+                            {/* Favorite button (future) */}
+                            <button
+                              onClick={() => openTradeItemEditor('receive', index)}
+                              className="text-blue-500 hover:text-blue-700"
+                              title="Advanced Edit"
+                            >
+                              <Settings size={14} />
+                            </button>
+                            <button
+                              onClick={() => removeItemFromTrade('receive', index)}
+                              className="text-red-500 hover:text-red-700"
+                              title="Remove"
+                            >
+                              <Minus size={14} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}> 
+                          {item.type === 'pet' ? (
+                            <>
+                              Level
+                              <input
+                                type="range"
+                                min="1"
+                                max="100"
+                                value={item.level}
+                                onChange={e => updateTradePetLevel('receive', index, parseInt(e.target.value) || 1)}
+                                className="mx-2 align-middle"
+                                title="Pet Level"
+                              />
+                              <span className="ml-1">{item.level}</span>
+                            </>
+                          ) : (
+                            <>
+                              Qty
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.quantity}
+                                onChange={e => updateTradeItemQuantity('receive', index, parseInt(e.target.value) || 1)}
+                                className={`w-14 p-1 mx-2 text-center border rounded text-sm ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'}`}
+                                title="Quantity"
+                              />
+                            </>
+                          )}
+                          {item.type === 'crop' && (
+                            <>
+                              <span className="ml-2">Weight</span>
+                              <input
+                                type="range"
+                                min="0.1"
+                                max="1000"
+                                step="0.1"
+                                value={item.weight || 1}
+                                onChange={e => {
+                                  const w = parseFloat(e.target.value) || 1;
+                                  setReceivingItems(prev => {
+                                    const newItems = [...prev];
+                                    if (newItems[index]) newItems[index].weight = w;
+                                    return newItems;
+                                  });
+                                }}
+                                className="mx-2 align-middle"
+                                title="Crop Weight"
+                              />
+                              <span>{(item.weight || 1).toFixed(1)}kg</span>
+                              {/* Quick mutation popover button */}
+                              <button
+                                className="ml-2 px-2 py-1 rounded bg-yellow-100 text-yellow-700 text-xs hover:bg-yellow-200"
+                                title="Quick Mutations"
+                                onClick={() => setEditingTradeItem({ listType: 'receive', index, item })}
+                              >
+                                {item.mutations.length} mutation{item.mutations.length !== 1 ? 's' : ''}
+                              </button>
+                            </>
+                          )}
+                          {item.type === 'seed' && (
+                            <span className="ml-2">• Grows: {item.data.cropName}</span>
+                          )}
+                          <span className={`ml-2 px-1 rounded-full text-xs ${getRarityColor(item.data.rarity)}`}>{item.data.rarity}</span>
+                        </div>
+                        <div className={`text-sm font-bold text-right ${darkMode ? 'text-green-400' : 'text-green-600'}`}>¢{formatNumber(calculateTradeItemValue(item))}</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Item Selector Modal for Trading */}
+        {showTradeItemSelector && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className={`relative ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col`}>
+              <h2 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                Select Item for Trade
+              </h2>
+              <input
+                type="text"
+                placeholder="Search crops or pets..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`w-full p-3 mb-4 border rounded-lg ${
+                  darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              />
+
+              <div className="flex-grow overflow-y-auto space-y-2 pr-2">
+                {/* Seeds Section */}
+                <h3 className={`text-lg font-semibold sticky top-0 py-2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} z-10`}>Seeds</h3>
+                {filteredSeeds.length > 0 ? (
+                  filteredSeeds.map((item, index) => (
+                    <button
+                      key={`trade-seed-${index}-${item.name}`}
+                      onClick={() => handleSelectTradeItem('seed', item)}
+                      className={`w-full p-3 rounded-lg text-left transition-all duration-200 border-2 ${
+                        darkMode ? 'border-transparent hover:bg-gray-700' : 'border-transparent hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                          {item.name}
+                        </span>
+                        <span className={`text-sm ${getRarityColor(item.rarity)}`}>
+                          ¢{formatNumber(item.baseValue)}
+                        </span>
+                      </div>
+                      <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {item.type} | {item.rarity} | Grows: {item.cropName}
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <p className={`text-center py-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No seeds found.</p>
+                )}
+
+                {/* Crops Section */}
+                <h3 className={`text-lg font-semibold sticky top-0 py-2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} z-10 mt-4`}>Crops & Resources</h3>
+                {filteredCrops.length > 0 ? (
+                  filteredCrops.map((item, index) => (
+                    <button
+                      key={`trade-crop-${index}-${item.name}`}
+                      onClick={() => handleSelectTradeItem('crop', item)}
+                      className={`w-full p-3 rounded-lg text-left transition-all duration-200 border-2 ${
+                        darkMode ? 'border-transparent hover:bg-gray-700' : 'border-transparent hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                          {item.name}
+                        </span>
+                        <span className={`text-sm ${getRarityColor(item.rarity)}`}>
+                          ¢{formatNumber(item.baseValue)}
+                        </span>
+                      </div>
+                      <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {item.type} | {item.rarity}
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <p className={`text-center py-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No crops found.</p>
+                )}
+
+                {/* Pets Section */}
+                <h3 className={`text-lg font-semibold sticky top-0 py-2 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} z-10 mt-4`}>Pets</h3>
+                {filteredPets.length > 0 ? (
+                  filteredPets.map((item, index) => (
+                    <button
+                      key={`trade-pet-${index}-${item.name}`}
+                      onClick={() => handleSelectTradeItem('pet', item)}
+                      className={`w-full p-3 rounded-lg text-left transition-all duration-200 border-2 ${
+                        darkMode ? 'border-transparent hover:bg-gray-700' : 'border-transparent hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                          {item.name}
+                        </span>
+                        <span className={`text-sm ${getRarityColor(item.rarity)}`}>
+                          ¢{formatNumber(item.baseValue)}
+                        </span>
+                      </div>
+                      <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {item.egg} | {item.rarity}
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <p className={`text-center py-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No pets found.</p>
+                )}
+              </div>
+
+              <button
+                onClick={() => setShowTradeItemSelector(false)}
+                className={`mt-4 px-6 py-2 rounded-lg font-medium transition-colors ${
+                  darkMode ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-red-500 text-white hover:bg-red-600'
+                }`}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Trade Item Editor Modal */}
+        {showTradeItemEditor && editingTradeItem && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className={`relative ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] flex flex-col`}>
+              <h2 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                Edit Trade Item: {editingTradeItem.item.data.name}
+              </h2>
+
+              <div className="flex-grow overflow-y-auto space-y-6 pr-2">
+                {/* Basic Info */}
+                <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    Basic Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Quantity
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={editingTradeItem.item.quantity || 1}
+                        onChange={(e) => setEditingTradeItem(prev => ({
+                          ...prev,
+                          item: { ...prev.item, quantity: parseInt(e.target.value) || 1 }
+                        }))}
+                        className={`w-full p-2 border rounded text-sm ${
+                          darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'
+                        }`}
+                      />
+                    </div>
+                    {editingTradeItem.item.type === 'crop' && (
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Weight: {(editingTradeItem.item.weight || 1).toFixed(1)} kg
+                        </label>
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="1000"
+                          step="0.1"
+                          value={editingTradeItem.item.weight || 1}
+                          onChange={(e) => updateTradeItemWeight(parseFloat(e.target.value) || 1)}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>0.1kg</span>
+                          <span>1000kg</span>
+                        </div>
+                      </div>
+                    )}
+                    {editingTradeItem.item.type === 'pet' && (
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Pet Level: {editingTradeItem.item.level || 1}
+                        </label>
+                        <input
+                          type="range"
+                          min="1"
+                          max="100"
+                          step="1"
+                          value={editingTradeItem.item.level || 1}
+                          onChange={(e) => setEditingTradeItem(prev => ({
+                            ...prev,
+                            item: { ...prev.item, level: parseInt(e.target.value) || 1 }
+                          }))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>Level 1</span>
+                          <span>Level 100</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mutations for Crops */}
+                {editingTradeItem.item.type === 'crop' && (
+                  <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                      Mutations ({editingTradeItem.item.mutations?.length || 0} selected)
+                    </h3>
+                    
+                    {/* Growth Mutations */}
+                    <div className="mb-4">
+                      <h4 className={`font-medium mb-2 flex items-center gap-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <Star size={16} />
+                        Growth Mutations (Stackable!)
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {mutations.growth.map((mutation, index) => (
+                          <button
+                            key={`edit-growth-${index}-${mutation.name}`}
+                            onClick={() => toggleTradeItemMutation(mutation)}
+                            className={`p-3 rounded-lg text-left transition-all border-2 ${
+                              editingTradeItem.item.mutations?.some(m => m && m.name === mutation.name)
+                                ? 'border-yellow-500 bg-yellow-50 shadow-lg'
+                                : darkMode
+                                ? 'border-gray-600 hover:border-yellow-400 bg-gray-700'
+                                : 'border-gray-200 hover:border-yellow-300 bg-white'
+                            }`}
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                {mutation.name}
+                              </span>
+                              <span className="text-sm font-bold text-yellow-600">×{mutation.multiplier || 1}</span>
+                            </div>
+                            <div className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                              {mutation.description || 'No description'}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Environmental Mutations */}
+                    <div>
+                      <h4 className={`font-medium mb-2 flex items-center gap-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <TrendingUp size={16} />
+                        Environmental Mutations
+                        <button
+                          onClick={() => setEditingTradeItem(prev => ({
+                            ...prev,
+                            item: { ...prev.item, mutations: [] }
+                          }))}
+                          className="ml-auto text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        >
+                          Clear All
+                        </button>
+                      </h4>
+                      <div className="max-h-64 overflow-y-auto space-y-1">
+                        {mutations.environmental.map((mutation, index) => {
+                          const isSelected = editingTradeItem.item.mutations?.some(m => m && m.name === mutation.name);
+                          const isExclusive = mutation.exclusive && editingTradeItem.item.data &&
+                            Array.isArray(mutation.exclusive) &&
+                            !mutation.exclusive.includes(editingTradeItem.item.data.name);
+
+                          return (
+                            <button
+                              key={`edit-mutation-${index}-${mutation.name}`}
+                              onClick={() => !isExclusive && toggleTradeItemMutation(mutation)}
+                              disabled={isExclusive}
+                              className={`w-full p-2 rounded text-left transition-all border text-sm ${
+                                isExclusive
+                                  ? darkMode
+                                    ? 'border-gray-600 bg-gray-700 text-gray-500 cursor-not-allowed'
+                                    : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : isSelected
+                                  ? 'border-green-500 bg-green-50'
+                                  : darkMode
+                                  ? 'border-gray-600 hover:border-green-400 bg-gray-700'
+                                  : 'border-gray-200 hover:border-green-300 bg-white'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center">
+                                <span className={`font-medium ${
+                                  isExclusive
+                                    ? 'text-gray-400'
+                                    : darkMode ? 'text-white' : 'text-gray-800'
+                                }`}>
+                                  {mutation.name}
+                                </span>
+                                <span className={`text-xs px-1 rounded ${getRarityColor(mutation.rarity)}`}>
+                                  +{mutation.multiplier || 0}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Value Preview */}
+                <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    Value Preview
+                  </h3>
+                  <div className="text-center">
+                    <div className={`text-3xl font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                      ¢{formatNumber(calculateTradeItemValue(editingTradeItem.item))}
+                    </div>
+                    <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Final Value (with all attributes)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={saveTradeItemChanges}
+                  className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors ${
+                    darkMode ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-green-500 text-white hover:bg-green-600'
+                  }`}
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={cancelTradeItemChanges}
+                  className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors ${
+                    darkMode ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-red-500 text-white hover:bg-red-600'
+                  }`}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

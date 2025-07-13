@@ -1,6 +1,6 @@
-# 🌱 Enhanced Grow Garden Calculator (GAG Calculator)
+# 🌱 SheckleShare - Advanced Grow Garden Calculator
 
-A comprehensive React-based calculator for the Grow Garden game, featuring advanced crop and pet management with real-time value calculations and mutation analysis.
+A comprehensive React-based calculator for the Grow Garden game, featuring advanced crop and pet management with real-time value calculations and mutation analysis. Named in homage to the game's currency - Sheckles!
 
 ## ✨ Features
 

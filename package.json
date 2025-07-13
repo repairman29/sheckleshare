@@ -1,7 +1,7 @@
 {
-  "name": "gag-calculator",
+  "name": "sheckleshare",
   "version": "1.0.0",
-  "description": "Enhanced Grow a Garden Calculator with advanced features",
+  "description": "SheckleShare - Advanced Grow a Garden Calculator with crop, pet, and seed trading",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
